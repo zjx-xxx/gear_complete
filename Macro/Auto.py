@@ -25,7 +25,7 @@ def Macro2():
 
     import numpy as np
     ##创建模型
-    step = mdb.openStep('C:/mine/git/gear/gear_step/assembled_gear_pair.step',
+    step = mdb.openStep('../gear_step/assembled_gear_pair.step',
         scaleFromFile=OFF)
     mdb.models['Model-1'].PartFromGeometryFile(name='assembled_gear_pair-1',
         geometryFile=step, combine=False, dimensionality=THREE_D,
