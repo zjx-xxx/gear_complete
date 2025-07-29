@@ -27,7 +27,7 @@ if errorlevel 1 (
 cd ..
 
 echo =============================
-echo 1. Running gear_assemble.py (system Python)
+echo 3. Running gear_assemble.py (system Python)
 echo =============================
 python gear_assemble.py
 if errorlevel 1 (
@@ -39,7 +39,7 @@ if errorlevel 1 (
 cd ./Macro
 
 echo =============================
-echo 3. Running Auto.py with Abaqus CAE (no GUI)
+echo 4. Running Auto.py with Abaqus CAE (no GUI)
 echo =============================
 abaqus cae noGUI=Auto.py
 if errorlevel 1 (
@@ -49,11 +49,23 @@ if errorlevel 1 (
 )
 
 echo =============================
-echo 4. Running extract_vonmises_stress.py with Abaqus Python
+echo 5. Running extract_vonmises_stress.py with Abaqus Python
 echo =============================
 abaqus python extract_vonmises_stress.py
 if errorlevel 1 (
     echo extract_vonmises_stress.py failed.
+    pause
+    exit /b 1
+)
+cd ..
+cd ./gear_step
+
+echo =============================
+echo 6. Running move_step
+echo =============================
+python move_step.py
+if errorlevel 1 (
+    echo move_step.py failed.
     pause
     exit /b 1
 )
