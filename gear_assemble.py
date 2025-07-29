@@ -1,9 +1,9 @@
 import cadquery as cq
 import math
 def assemble_gear(modulus=3.75,z1=19,z2=20,center_distance=73.125,
-                   gear1_file_name="gear_step//SpurGear1_cut_selected.step",
-                   gear2_file_name="gear_step//SpurGear2_cut_selected.step",
-                   gear_assembled_file_name="gear_step//assembled_gear_pair.step"):
+                   gear1_file_name="./Macro/SpurGear1_cut.step",
+                   gear2_file_name="./Macro/SpurGear2_cut.step",
+                   gear_assembled_file_name="./gear_step/assembled_gear_pair.step"):
     """
     :param modulus:齿轮模数
     :param z1:齿轮1齿数
