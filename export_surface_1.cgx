@@ -1,0 +1,4 @@
+read assembled_gears_OUT.inp
+comp contact_1 do
+send contact_1 abq surface
+quit
