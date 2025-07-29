@@ -32,6 +32,8 @@ for step_name, step in odb.steps.items():
 
 print("\n==== 最终结果 ====")
 print(f"最大Von Mises 应力：{overall_max_mises:.2f} MPa")
+with open("../output.txt",'w') as f:
+    f.write(overall_max_mises)
 print(f"位置：{location_info}")
 
 odb.close()
