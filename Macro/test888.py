@@ -45,24 +45,55 @@ def translate_shape(shape, target_center):
 
 def generate_pit_centers(num_centers=3, u_pitch=0.2775, u_eps=0.0125):
     centers = []
-    for _ in range(num_centers):
-        u = np.random.uniform(u_pitch - u_eps, u_pitch + u_eps)
-        v = np.random.uniform(0.1, 0.9)
-        centers.append((u, v))
+    min_v_dist = 0.15  # 控制 v 方向最小间距（范围 0.232 到 0.768 大约有 0.5 可用）
+
+    v_min, v_max = 0.232, 0.768
+    max_attempts = 1000
+
+    print("中心点分布：")
+
+    for i in range(num_centers):
+        attempt = 0
+        while attempt < max_attempts:
+            u = np.random.uniform(u_pitch - u_eps, u_pitch + u_eps)
+            v = np.random.uniform(v_min, v_max)
+
+            # 与已有中心点保持 v 方向分散
+            if all(abs(v - prev_v) > min_v_dist for _, prev_v in centers):
+                centers.append((u, v))
+                print(f"第{i+1}个中心点的v坐标是{v:.4f}")
+                break
+            attempt += 1
+        else:
+            print(f"第{i+1}个中心点生成失败（尝试超过{max_attempts}次），放弃该点")
+
     return centers
 
-def generate_pit_cluster(center_uv, level=3, std_u=0.015, std_v=0.05):
+def generate_pit_cluster(center_uv, level=3, std_u=0.05, std_v=0.3):
     u0, v0 = center_uv
     pits = []
-    for layer in range(level):
-        num = 6 * (layer + 1)
-        ru = std_u * (layer + 1)
-        rv = std_v * (layer + 1)
-        radius = 0.01 * (1.0 - 0.3 * layer)
+    num_list = [16, 7, 3]
+    num = num_list[level-1]
+    for i in range(1, level+1):
+        # num = int((12 - level * 3.6) * 2)
+        # ru = std_u * (layer + 1)
+        # rv = std_v * (layer + 1)
+        # # 直径可以动态变化 16 24
+        # # 直径缩放比例0.01；0.007；0.004
+        # # （0.16, 0.12） (0.112, 0.084) (0.0784,0.0588)
+        # radius = 0.01 * (1.0 - 0.3 * layer)
+        # u_samples = np.random.normal(u0, ru, num)
+        # v_samples = np.random.normal(v0, rv, num)
+        # for u, v in zip(u_samples, v_samples):
+        #     if 0 < u < 0.5 and 0.2 < v < 0.8:
+        #         pits.append((u, v, radius))
+        ru = std_u * (level + 2 - i) * std_u
+        rv = std_v * (level + 2 - i) * std_v
+        radius = 0.02 * i
         u_samples = np.random.normal(u0, ru, num)
         v_samples = np.random.normal(v0, rv, num)
         for u, v in zip(u_samples, v_samples):
-            if 0 < u < 0.5 and 0 < v < 1:
+            if 0 < u < 0.5 and 0.2 < v < 0.8:
                 pits.append((u, v, radius))
     return pits
 
@@ -74,7 +105,7 @@ def generate_all_pits_from_pitch(num_centers=3, level=3):
         cluster = generate_pit_cluster(center, level)
         for u, v, r in cluster:
             pit_uv_list.append((u, v))
-            scale_xyz_list.append((r, 0.5*r, r))
+            scale_xyz_list.append((np.random.uniform(1, level) * r, 0.6 * r, np.random.uniform(1, (level * 1.25)) * r)) # (宽, 深, 长)
     return pit_uv_list, scale_xyz_list
 
 def extract_pit_info_from_faces(shape, target_face_ids, pit_uv_list, scale_xyz_list):
@@ -168,12 +199,13 @@ def cut_ellipsoids_on_faces_per_face_fused(step_path, ellipsoid_template_path, g
         result = BRepAlgoAPI_Cut(result, fused_ellipsoids).Shape()
     write_step_shape(result, output_path)
 
+
 def main():
     step_path = "./SpurGear2.STEP"
     output_path = "./SpurGear2_cut.step"
     ellipsoid_template_path = "./tuoqiu.STEP"
     target_face_ids = {37, 38}
-    pit_uv_list, scale_xyz_list = generate_all_pits_from_pitch(num_centers=3, level=3)
+    pit_uv_list, scale_xyz_list = generate_all_pits_from_pitch(num_centers=2, level=1)
     shape = read_step_shape(step_path)
     grouped_info = extract_pit_info_from_faces(shape, target_face_ids, pit_uv_list, scale_xyz_list)
     cut_ellipsoids_on_faces_per_face_fused(step_path, ellipsoid_template_path, grouped_info, output_path)

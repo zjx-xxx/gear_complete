@@ -1,76 +1,64 @@
 @echo off
+chcp 65001 >nul
+
+setlocal
+set SCRIPT_DIR=%~dp0
+set /a loop_count=0
+
+echo Activating conda environment...
 call %USERPROFILE%\miniforge3\Scripts\activate.bat gear
 
-cd ./Macro
+:fail
+echo ============================= >> "%SCRIPT_DIR%\run.txt"
+echo [第 %loop_count% 轮] failed... >> "%SCRIPT_DIR%\run.txt"
+echo ============================= >> "%SCRIPT_DIR%\run.txt"
+:loop_start
+set /a loop_count+=1
+echo ============================= >> "%SCRIPT_DIR%\run.txt"
+echo [第 %loop_count% 轮] Starting full pipeline... >> "%SCRIPT_DIR%\run.txt"
+echo ============================= >> "%SCRIPT_DIR%\run.txt"
 
-echo =============================
-echo 1. Running test777.py (system Python)
-echo =============================
-python test777.py
-if errorlevel 1 (
-    echo test777.py failed.
-    pause
-    exit /b 1
-)
+cd /d "%SCRIPT_DIR%\Macro"
+
+echo [第 %loop_count% 轮] Step 1: Running test777.py
+echo [第 %loop_count% 轮] Step 1: Running test777.py >> "%SCRIPT_DIR%\run.txt"
+python test777.py || goto :fail
+timeout /t 5 >nul
+
+echo [第 %loop_count% 轮] Step 2: Running test888.py
+echo [第 %loop_count% 轮] Step 2: Running test888.py >> "%SCRIPT_DIR%\run.txt"
+python test888.py || goto :fail
+timeout /t 5 >nul
+
+cd /d "%SCRIPT_DIR%"
+
+echo [第 %loop_count% 轮] Step 3: Running gear_assemble.py
+echo [第 %loop_count% 轮] Step 3: Running gear_assemble.py >> "%SCRIPT_DIR%\run.txt"
+python gear_assemble.py >> "%SCRIPT_DIR%\run.txt" 2>&1
+timeout /t 5 >nul
+
+cd /d "%SCRIPT_DIR%\Macro"
+
+echo [第 %loop_count% 轮] Step 4: Running Auto.py with Abaqus CAE
+echo [第 %loop_count% 轮] Step 4: Running Auto.py with Abaqus CAE >> "%SCRIPT_DIR%\run.txt"
+start /wait "" cmd /c abaqus cae noGUI=Auto.py >> "%SCRIPT_DIR%\run.txt" 2>&1 || goto :fail
+
+echo Finished Auto.py
+echo Finished Auto.py >> "%SCRIPT_DIR%\run.txt"
+timeout /t 5 >nul
+
+cd /d "%SCRIPT_DIR%\gear_step"
+
+echo [第 %loop_count% 轮] Step 5: Running move_step.py >> "%SCRIPT_DIR%\run.txt"
+python move_step.py >> "%SCRIPT_DIR%\run.txt" 2>&1
+timeout /t 5 >nul
+
+echo ============================= >> "%SCRIPT_DIR%\run.txt"
+echo [第 %loop_count% 轮] Loop completed successfully! >> "%SCRIPT_DIR%\run.txt"
+echo Press Ctrl+C to stop, or wait 5 seconds to continue... >> "%SCRIPT_DIR%\run.txt"
+echo ============================= >> "%SCRIPT_DIR%\run.txt"
+
+timeout /t 5 >nul
+goto :loop_start
 
 
-echo =============================
-echo 2. Running test888.py (system Python)
-echo =============================
-python test888.py
-if errorlevel 1 (
-    echo test888.py failed.
-    pause
-    exit /b 1
-)
-
-cd ..
-
-echo =============================
-echo 3. Running gear_assemble.py (system Python)
-echo =============================
-python gear_assemble.py
-if errorlevel 1 (
-    echo gear_assemble.py failed.
-    pause
-    exit /b 1
-)
-
-cd ./Macro
-
-echo =============================
-echo 4. Running Auto.py with Abaqus CAE (no GUI)
-echo =============================
-abaqus cae noGUI=Auto.py
-if errorlevel 1 (
-    echo Auto.py failed.
-    pause
-    exit /b 1
-)
-
-echo =============================
-echo 5. Running extract_vonmises_stress.py with Abaqus Python
-echo =============================
-abaqus python extract_vonmises_stress.py
-if errorlevel 1 (
-    echo extract_vonmises_stress.py failed.
-    pause
-    exit /b 1
-)
-cd ..
-cd ./gear_step
-
-echo =============================
-echo 6. Running move_step
-echo =============================
-python move_step.py
-if errorlevel 1 (
-    echo move_step.py failed.
-    pause
-    exit /b 1
-)
-
-echo =============================
-echo All scripts completed successfully!
-echo =============================
-pause
