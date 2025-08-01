@@ -198,7 +198,7 @@ def find_contact_surfaces(gear_volume_tag, max_size=10.0, min_radial_distance=0.
 
     return contact_surfaces
 
-def make_mesh(step_path="gear_step//assembled_gear_pair.step",unv_path="assembled_gears.unv",origin_point_1=(0,0,0), origin_point_2=(73.126,0,0),):
+def make_mesh(step_path="./gear_step/assembled_gear_pair.step",unv_path="assembled_gears.unv",origin_point_1=(0,0,0), origin_point_2=(73.126,0,0),):
 
     """
 
@@ -389,3 +389,5 @@ def make_mesh(step_path="gear_step//assembled_gear_pair.step",unv_path="assemble
 
     gmsh.finalize()
     return
+
+make_mesh()
