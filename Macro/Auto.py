@@ -72,43 +72,43 @@ def Macro2():
     elemType2 = mesh.ElemType(elemCode=C3D15)
     elemType3 = mesh.ElemType(elemCode=C3D10)
 
-    #齿轮1网格划分
-    p1.seedEdgeBySize(
-        edges=p1.edges.getByBoundingBox(
-            xMin=25, xMax=50,  # 通常设置为包含 contact_faces 的 box
-            yMin=-15, yMax=15,
-            zMin=-20, zMax=20
-        ),
-        size=4.0,  # ⬅️ 更小的种子尺寸（根据精度需求调整）
-        deviationFactor=0.1,
-        minSizeFactor=0.1
-    )
+    # #齿轮1网格划分
+    # p1.seedEdgeBySize(
+    #     edges=p1.edges.getByBoundingBox(
+    #         xMin=25, xMax=50,  # 通常设置为包含 contact_faces 的 box
+    #         yMin=-15, yMax=15,
+    #         zMin=-20, zMax=20
+    #     ),
+    #     size=4.0,  # ⬅️ 更小的种子尺寸（根据精度需求调整）
+    #     deviationFactor=0.05,
+    #     minSizeFactor=0.01
+    # )
 
     # p1.setMeshControls(regions=cells1, algorithm=MEDIAL_AXIS)
     p1.setMeshControls(regions=cells1, elemShape=TET, technique=FREE)
     pickedRegions = (cells1,)
     p1.setElementType(regions=pickedRegions, elemTypes=(elemType1, elemType2,
                                                         elemType3))
-    p1.seedPart(size=8.0, deviationFactor=0.1, minSizeFactor=0.1)
+    p1.seedPart(size=8.0, deviationFactor=0.1, minSizeFactor=0.01)
     p1.generateMesh()
-    #齿轮2网格划分
-    p2.seedEdgeBySize(
-        edges=p2.edges.getByBoundingBox(
-            xMin=25, xMax=50,  # 通常设置为包含 contact_faces 的 box
-            yMin=-15, yMax=15,
-            zMin=-20, zMax=20
-        ),
-        size=4.0,  # ⬅️ 更小的种子尺寸（根据精度需求调整）
-        deviationFactor=0.1,
-        minSizeFactor=0.1
-    )
+    # #齿轮2网格划分
+    # p2.seedEdgeBySize(
+    #     edges=p2.edges.getByBoundingBox(
+    #         xMin=25, xMax=50,  # 通常设置为包含 contact_faces 的 box
+    #         yMin=-15, yMax=15,
+    #         zMin=-20, zMax=20
+    #     ),
+    #     size=4.0,  # ⬅️ 更小的种子尺寸（根据精度需求调整）
+    #     deviationFactor=0.05,
+    #     minSizeFactor=0.01
+    # )
 
     # p2.setMeshControls(regions=cells2, algorithm=MEDIAL_AXIS)
     p2.setMeshControls(regions=cells2, elemShape=TET, technique=FREE)
     pickedRegions = (cells2,)
     p2.setElementType(regions=pickedRegions, elemTypes=(elemType1, elemType2,
                                                         elemType3))
-    p2.seedPart(size=8.0, deviationFactor=0.1, minSizeFactor=0.1)
+    p2.seedPart(size=8.0, deviationFactor=0.1, minSizeFactor=0.01)
     p2.generateMesh()
 
     a.regenerate()
@@ -177,7 +177,7 @@ def Macro2():
     )
     mdb.models['Model-1'].interactionProperties['IntProp-1'].NormalBehavior(
         pressureOverclosure=HARD, allowSeparation=ON, contactStiffness=DEFAULT,
-        contactStiffnessScaleFactor=0.1, clearanceAtZeroContactPressure=0.0,
+        clearanceAtZeroContactPressure=0.0,
         constraintEnforcementMethod=AUGMENTED_LAGRANGE)
     region1 = a.surfaces['Surf-1']
     region2 = a.sets['Set-1']
@@ -186,6 +186,7 @@ def Macro2():
                                                      sliding=FINITE, thickness=ON, interactionProperty='IntProp-1',
                                                      adjustMethod=NONE, initialClearance=OMIT, datumAxis=None,
                                                      clearanceRegion=None)
+
 
     with open('results.txt', 'a') as f:
         f.write('surface success\n')
@@ -237,14 +238,14 @@ def Macro2():
     # 使用 face 对象列表创建 region
     region2_2 = regionToolset.Region(side1Faces=gear_teeth_faces)
 
-    with open('results.txt', 'a') as f:
-        f.write('boundary success\n')
-
     mdb.models['Model-1'].Coupling(name='Constraint-2', controlPoint=region2_1,
                                    surface=region2_2, influenceRadius=WHOLE_SURFACE,
                                    couplingType=DISTRIBUTING,
                                    rotationalCouplingType=ROTATIONAL_STRUCTURAL, weightingMethod=UNIFORM,
                                    localCsys=None, u1=ON, u2=ON, u3=ON, ur1=ON, ur2=ON, ur3=ON)
+
+    with open('results.txt', 'a') as f:
+        f.write('boundary success\n')
 
     mdb.models['Model-1'].ImplicitDynamicsStep(name='Step-1', previous='Initial',
                                                timePeriod=0.0058, maxNumInc=1000, initialInc=5.8e-05, minInc=5.8e-08,
@@ -272,18 +273,19 @@ def Macro2():
                                          region=region2, u1=0.0, u2=0.0, u3=0.0, ur1=0.0, ur2=0.0, ur3=UNSET,
                                          amplitude=UNSET, fixed=OFF, distributionType=UNIFORM, fieldName='',
                                          localCsys=None)
+    mdb.saveAs(pathName=f'./ZZ35_{timenow}.cae')
     import os
     try:
         os.remove('ZZ35.lck')
     except FileNotFoundError:
         pass
     mdb.Job(name=f'ZZ35_{timenow}', model='Model-1', description='', type=ANALYSIS,
-            atTime=None, waitMinutes=0, waitHours=0, queue=None, memory=90,
-            memoryUnits=PERCENTAGE, getMemoryFromAnalysis=True,
-            explicitPrecision=SINGLE, nodalOutputPrecision=SINGLE, echoPrint=OFF,
-            modelPrint=OFF, contactPrint=OFF, historyPrint=OFF, userSubroutine='',
-            scratch='', resultsFormat=ODB, numThreadsPerMpiProcess=6, numCpus=6,
-            numDomains=6, numGPUs=1)
+        atTime=None, waitMinutes=0, waitHours=0, queue=None, memory=90,
+        memoryUnits=PERCENTAGE, getMemoryFromAnalysis=True,
+        explicitPrecision=SINGLE, nodalOutputPrecision=SINGLE, echoPrint=OFF,
+        modelPrint=OFF, contactPrint=OFF, historyPrint=OFF, userSubroutine='',
+        scratch='', resultsFormat=ODB, numThreadsPerMpiProcess=0, numCpus=6,
+        numDomains=6, numGPUs=1)
     mdb.jobs[f'ZZ35_{timenow}'].submit(consistencyChecking=OFF)
     mdb.jobs[f'ZZ35_{timenow}'].waitForCompletion()
     with open('results.txt', 'a') as f:

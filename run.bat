@@ -47,9 +47,14 @@ echo Finished Auto.py
 echo Finished Auto.py >> "%SCRIPT_DIR%\run.txt"
 timeout /t 5 >nul
 
+echo [第 %loop_count% 轮] Step 5: Running extract_vonmises_stress.py
+echo [第 %loop_count% 轮] Step 5: Running extract_vonmises_stress.py >> "%SCRIPT_DIR%\run.txt"
+start /wait cmd /c "abaqus python extract_vonmises_stress.py >> \"%SCRIPT_DIR%\run.txt\" 2>&1"
+timeout /t 5 >nul
+
 cd /d "%SCRIPT_DIR%\gear_step"
 
-echo [第 %loop_count% 轮] Step 5: Running move_step.py >> "%SCRIPT_DIR%\run.txt"
+echo [第 %loop_count% 轮] Step 6: Running move_step.py >> "%SCRIPT_DIR%\run.txt"
 python move_step.py >> "%SCRIPT_DIR%\run.txt" 2>&1
 timeout /t 5 >nul
 

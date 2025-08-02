@@ -3,24 +3,21 @@ from abaqusConstants import *
 import numpy as np
 import os
 
-# 设置包含 ODB 文件的目录
-odb_dir = '.'  # 当前目录，或替换为你指定的目录路径
-output_txt = '../output.txt'  # 输出路径，可根据需要修改
+# 指定 ODB 目录与输出文件路径
+odb_dir = '.'
+output_txt = '../output.txt'
 
-# # 清空旧结果（可选）
-# with open(output_txt, 'w') as f:
-#     f.write("应力提取结果如下：\n")
+# 清空旧输出
+with open(output_txt, 'w') as f:
+    f.write("应力提取结果如下：\n")
 
-# 遍历目录下所有 .odb 文件
 for filename in os.listdir(odb_dir):
     if filename.endswith('.odb'):
         odb_path = os.path.join(odb_dir, filename)
         try:
             odb = openOdb(path=odb_path)
 
-            all_mises_values = []
-            location_info = ""
-            max_mises = -1e10
+            all_mises_records = []  # 保存 (mises, step, frame, element, ip) 元组
 
             for step_name, step in odb.steps.items():
                 for frame in step.frames:
@@ -29,34 +26,44 @@ for filename in os.listdir(odb_dir):
 
                     for value in stress_field.values:
                         mises = value.mises
-                        all_mises_values.append(mises)
+                        record = (
+                            mises,
+                            step_name,
+                            time,
+                            getattr(value, 'elementLabel', 'N/A'),
+                            value.integrationPoint
+                        )
+                        all_mises_records.append(record)
 
-                        if mises > max_mises:
-                            max_mises = mises
-                            location_info = (
-                                f"Step: {step_name}, Frame: {time}, "
-                                f"Element: {getattr(value, 'elementLabel', 'N/A')}, "
-                                f"Integration Point: {value.integrationPoint}"
-                            )
-
-            if all_mises_values:
+            if all_mises_records:
+                # 排序并提取应力值
+                sorted_records = sorted(all_mises_records, key=lambda x: x[0])
+                mises_values = [r[0] for r in sorted_records]
                 q = 99.95
-                percentile_95 = np.percentile(all_mises_values, q)
+                percentile_value = np.percentile(mises_values, q)
+
+                # 找到最接近分位值的项
+                closest_record = min(sorted_records, key=lambda r: abs(r[0] - percentile_value))
+                max_record = max(all_mises_records, key=lambda r: r[0])
 
                 output_line = (
-                    f"[{filename}] 最大Von Mises应力: {max_mises:.2f} MPa, "
-                    f"{q}%分位应力: {percentile_95:.2f} MPa, "
-                    f"位置: {location_info}"
+                    f"[{filename}]\n"
+                    f"最大Von Mises应力: {max_record[0]:.2f} MPa, "
+                    f"位置: Step: {max_record[1]}, Frame: {max_record[2]}, "
+                    f"Element: {max_record[3]}, Integration Point: {max_record[4]}\n"
+                    f"{q}%分位应力: {percentile_value:.2f} MPa, "
+                    f"最接近位置: Step: {closest_record[1]}, Frame: {closest_record[2]}, "
+                    f"Element: {closest_record[3]}, Integration Point: {closest_record[4]}"
                 )
             else:
                 output_line = f"[{filename}] 无有效应力数据"
 
             print(output_line)
-
             with open(output_txt, 'a') as f:
                 f.write(output_line + "\n")
 
             odb.close()
+
         except Exception as e:
             error_msg = f"[{filename}] 处理失败: {str(e)}"
             print(error_msg)

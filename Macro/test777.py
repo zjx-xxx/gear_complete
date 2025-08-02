@@ -45,7 +45,7 @@ def translate_shape(shape, target_center):
 
 def generate_pit_centers(num_centers=3, u_pitch=0.2775, u_eps=0.0125):
     centers = []
-    min_v_dist = 0.15  # 控制 v 方向最小间距（范围 0.232 到 0.768 大约有 0.5 可用）
+    min_v_dist = 0.20  # 控制 v 方向最小间距（范围 0.232 到 0.768 大约有 0.5 可用）
 
     v_min, v_max = 0.232, 0.768
     max_attempts = 1000
@@ -72,7 +72,7 @@ def generate_pit_centers(num_centers=3, u_pitch=0.2775, u_eps=0.0125):
 def generate_pit_cluster(center_uv, level=3, std_u=0.05, std_v=0.3):
     u0, v0 = center_uv
     pits = []
-    num_list = [16, 7, 3]
+    num_list = [16, 6, 3]
     num = num_list[level-1]
     for i in range(1, level+1):
         # num = int((12 - level * 3.6) * 2)
@@ -105,7 +105,7 @@ def generate_all_pits_from_pitch(num_centers=3, level=3):
         cluster = generate_pit_cluster(center, level)
         for u, v, r in cluster:
             pit_uv_list.append((u, v))
-            scale_xyz_list.append((np.random.uniform(1, level) * r, 0.6 * r, np.random.uniform(1, (level * 1.25)) * r)) # (宽, 深, 长)
+            scale_xyz_list.append((np.random.uniform(1, (1+level*0.15)) * r, 0.6 * r, np.random.uniform(1, 1 + (level * 0.6)) * r)) # (宽, 深, 长)
     return pit_uv_list, scale_xyz_list
 
 def extract_pit_info_from_faces(shape, target_face_ids, pit_uv_list, scale_xyz_list):
@@ -204,7 +204,7 @@ def main():
     output_path = "./SpurGear1_cut.step"
     ellipsoid_template_path = "./tuoqiu.STEP"
     target_face_ids = {22, 23, 26}
-    pit_uv_list, scale_xyz_list = generate_all_pits_from_pitch(num_centers=3, level=3)
+    pit_uv_list, scale_xyz_list = generate_all_pits_from_pitch(num_centers=3, level=1)
     shape = read_step_shape(step_path)
     grouped_info = extract_pit_info_from_faces(shape, target_face_ids, pit_uv_list, scale_xyz_list)
     cut_ellipsoids_on_faces_per_face_fused(step_path, ellipsoid_template_path, grouped_info, output_path)
