@@ -89,7 +89,7 @@ def Macro2():
     pickedRegions = (cells1,)
     p1.setElementType(regions=pickedRegions, elemTypes=(elemType1, elemType2,
                                                         elemType3))
-    p1.seedPart(size=6.0, deviationFactor=0.1, minSizeFactor=0.1)
+    p1.seedPart(size=8.0, deviationFactor=0.1, minSizeFactor=0.05)
     p1.generateMesh()
     # #齿轮2网格划分
     # p2.seedEdgeBySize(
@@ -104,11 +104,11 @@ def Macro2():
     # )
 
     # p2.setMeshControls(regions=cells2, algorithm=MEDIAL_AXIS)
-    p2.setMeshControls(regions=cells2, elemShape=TET, technique=FREE, allowMapped=False)
+    p2.setMeshControls(regions=cells2, elemShape=TET, technique=FREE)
     pickedRegions = (cells2,)
     p2.setElementType(regions=pickedRegions, elemTypes=(elemType1, elemType2,
                                                         elemType3))
-    p2.seedPart(size=8.0, deviationFactor=0.1, minSizeFactor=0.1)
+    p2.seedPart(size=8.0, deviationFactor=0.1, minSizeFactor=0.05)
     p2.generateMesh()
 
     a.regenerate()
