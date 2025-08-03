@@ -85,7 +85,7 @@ def Macro2():
     # )
 
     # p1.setMeshControls(regions=cells1, algorithm=MEDIAL_AXIS)
-    p1.setMeshControls(regions=cells1, elemShape=TET, technique=FREE, allowMapped=False)
+    p1.setMeshControls(regions=cells1, elemShape=TET, technique=FREE)
     pickedRegions = (cells1,)
     p1.setElementType(regions=pickedRegions, elemTypes=(elemType1, elemType2,
                                                         elemType3))
@@ -216,10 +216,11 @@ def Macro2():
 
     # 使用 face 对象列表创建 region
     region1_2 = regionToolset.Region(side1Faces=gear_teeth_faces)
+
     mdb.models['Model-1'].Coupling(name='Constraint-1', controlPoint=region1_1,
                                    surface=region1_2, influenceRadius=WHOLE_SURFACE,
                                    couplingType=DISTRIBUTING,
-                                   rotationalCouplingType=ROTATIONAL_STRUCTURAL, weightingMethod=UNIFORM,
+                                   rotationalCouplingType=ROTATIONAL_CONTINUUM, weightingMethod=UNIFORM,
                                    localCsys=None, u1=ON, u2=ON, u3=ON, ur1=ON, ur2=ON, ur3=ON)
 
     ## 从动轮约束
@@ -236,6 +237,7 @@ def Macro2():
 
     # 使用 face 对象列表创建 region
     region2_2 = regionToolset.Region(side1Faces=gear_teeth_faces)
+
     mdb.models['Model-1'].Coupling(name='Constraint-2', controlPoint=region2_1,
                                    surface=region2_2, influenceRadius=WHOLE_SURFACE,
                                    couplingType=DISTRIBUTING,
