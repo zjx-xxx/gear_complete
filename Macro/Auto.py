@@ -85,11 +85,11 @@ def Macro2():
     # )
 
     # p1.setMeshControls(regions=cells1, algorithm=MEDIAL_AXIS)
-    p1.setMeshControls(regions=cells1, elemShape=TET, technique=FREE)
+    p1.setMeshControls(regions=cells1, elemShape=TET, technique=FREE, allowMapped=False)
     pickedRegions = (cells1,)
     p1.setElementType(regions=pickedRegions, elemTypes=(elemType1, elemType2,
                                                         elemType3))
-    p1.seedPart(size=8.0, deviationFactor=0.1, minSizeFactor=0.01)
+    p1.seedPart(size=6.0, deviationFactor=0.1, minSizeFactor=0.1)
     p1.generateMesh()
     # #齿轮2网格划分
     # p2.seedEdgeBySize(
@@ -104,11 +104,11 @@ def Macro2():
     # )
 
     # p2.setMeshControls(regions=cells2, algorithm=MEDIAL_AXIS)
-    p2.setMeshControls(regions=cells2, elemShape=TET, technique=FREE)
+    p2.setMeshControls(regions=cells2, elemShape=TET, technique=FREE, allowMapped=False)
     pickedRegions = (cells2,)
     p2.setElementType(regions=pickedRegions, elemTypes=(elemType1, elemType2,
                                                         elemType3))
-    p2.seedPart(size=8.0, deviationFactor=0.1, minSizeFactor=0.01)
+    p2.seedPart(size=6.0, deviationFactor=0.1, minSizeFactor=0.1)
     p2.generateMesh()
 
     a.regenerate()
@@ -220,7 +220,7 @@ def Macro2():
     mdb.models['Model-1'].Coupling(name='Constraint-1', controlPoint=region1_1,
                                    surface=region1_2, influenceRadius=WHOLE_SURFACE,
                                    couplingType=DISTRIBUTING,
-                                   rotationalCouplingType=ROTATIONAL_STRUCTURAL, weightingMethod=UNIFORM,
+                                   rotationalCouplingType=ROTATIONAL_CONTINUUM, weightingMethod=UNIFORM,
                                    localCsys=None, u1=ON, u2=ON, u3=ON, ur1=ON, ur2=ON, ur3=ON)
 
     ## 从动轮约束
@@ -241,7 +241,7 @@ def Macro2():
     mdb.models['Model-1'].Coupling(name='Constraint-2', controlPoint=region2_1,
                                    surface=region2_2, influenceRadius=WHOLE_SURFACE,
                                    couplingType=DISTRIBUTING,
-                                   rotationalCouplingType=ROTATIONAL_STRUCTURAL, weightingMethod=UNIFORM,
+                                   rotationalCouplingType=ROTATIONAL_CONTINUUM, weightingMethod=UNIFORM,
                                    localCsys=None, u1=ON, u2=ON, u3=ON, ur1=ON, ur2=ON, ur3=ON)
 
     with open('results.txt', 'a') as f:
