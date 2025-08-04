@@ -204,7 +204,7 @@ def main():
     output_path = "./SpurGear1_cut.step"
     ellipsoid_template_path = "./tuoqiu.STEP"
     target_face_ids = {22, 23, 26}
-    pit_uv_list, scale_xyz_list = generate_all_pits_from_pitch(num_centers=3, level=1)
+    pit_uv_list, scale_xyz_list = generate_all_pits_from_pitch(num_centers=2, level=1)
     shape = read_step_shape(step_path)
     grouped_info = extract_pit_info_from_faces(shape, target_face_ids, pit_uv_list, scale_xyz_list)
     cut_ellipsoids_on_faces_per_face_fused(step_path, ellipsoid_template_path, grouped_info, output_path)
