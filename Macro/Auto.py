@@ -177,22 +177,11 @@ def Macro2():
     )
     mdb.models['Model-1'].interactionProperties['IntProp-1'].NormalBehavior(
         pressureOverclosure=HARD, allowSeparation=ON, contactStiffness=DEFAULT,
-        contactStiffnessScaleFactor=0.1, clearanceAtZeroContactPressure=0.0,
+        contactStiffnessScaleFactor=0.1,
+        clearanceAtZeroContactPressure=0.0,
         constraintEnforcementMethod=AUGMENTED_LAGRANGE)
     region1 = a.surfaces['Surf-1']
-    # region2=a.surfaces['Surf-2']
     region2 = a.sets['Set-1']
-    # mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='Int-1',
-    #                                                  createStepName='Initial', main=region1, secondary=region2,
-    #                                                  sliding=FINITE, thickness=ON, interactionProperty='IntProp-1',
-    #                                                  adjustMethod=NONE, initialClearance=OMIT, datumAxis=None,
-    #                                                  clearanceRegion=None)
-    # mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='Int-1',
-    #     createStepName='Initial', main=region1, secondary=region2,
-    #     sliding=FINITE, enforcement=NODE_TO_SURFACE, thickness=OFF,
-    #     interactionProperty='IntProp-1', surfaceSmoothing=NONE,
-    #     adjustMethod=OVERCLOSED, smooth=0.2, initialClearance=OMIT, datumAxis=None,
-    #     clearanceRegion=None)
     mdb.models['Model-1'].SurfaceToSurfaceContactStd(name='Int-1',
                                                      createStepName='Initial', main=region1, secondary=region2,
                                                      sliding=FINITE, thickness=ON, interactionProperty='IntProp-1',
