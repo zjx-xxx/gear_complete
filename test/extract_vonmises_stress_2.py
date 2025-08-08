@@ -9,10 +9,11 @@
 
 from odbAccess import openOdb
 import numpy as np
-import os, math
+import os, math, glob
 
 # ========= 必填配置 =========
-odb_path = "./ZZ35_20250802_2319.odb"        # <--- 改成你的 ODB 路径
+# 若需要限定目录，可把 "." 改为具体路径
+ODB_DIR = "."                                 # <--- 遍历该目录下所有 .odb
 instance_name = "ASSEMBLED_GEAR_PAIR-1-1"    # <--- 改成你的实例名
 
 # 仅用于日志展示
@@ -21,18 +22,18 @@ CENTER_X, CENTER_Y = 0.0, 0.0
 # ✅ 多条节线的参考坐标（None 的先占位，填上(x,y,z)就会参与运算）
 #    第 5 条已填入你给的坐标
 REF_COORDS = {
-    1: (32.136979,13.782776,8.656675),  # 例： (x1, y1, z1)
-    2: (33.052997,8.945748,1.813109),  # 例： (x2, y2, z2)
-    3: (34.635532,2.484884,3.153081),  # 例： (x3, y3, z3)
-    4: (34.635532,-2.484884,3.153081),  # 例： (x4, y4, z4)
+    1: (32.136979,13.782776,8.656675),
+    2: (33.052997,8.945748,1.813109),
+    3: (34.635532,2.484884,3.153081),
+    4: (34.635532,-2.484884,3.153081),
     5: (33.21232719421387, -8.887279987335205, 7.518895483016967),
     6: (31.757954,-13.408759,0)
 }
 
 # 选区半径（单位同模型）
-R_REGION = 1.0   # 元素很小可增大，比如 1.5 / 2.0
+R_REGION = 1.0
 
-# ✅ 你自己控制分位区间与步长
+# ✅ 分位区间与步长
 P_MIN, P_MAX, P_STEP = 80.0, 100.0, 0.02
 
 # 曲线标注的一个分位点（可选）
@@ -127,8 +128,9 @@ def _decimals_for_values(arr):
 
 
 def plot_percentile_curve_auto(stresses, out_png, title, percentile_q=95.0,
-                               p_min=80.0, p_max=100.0, p_step=0.02):
-    """按用户给定的分位范围与步长取点，自动调图像精细度；Y 轴对数"""
+                               p_min=80.0, p_max=100.0, p_step=0.02,
+                               csv_path=None):
+    """按用户给定的分位范围与步长取点，自动调图像精细度；Y 轴对数；可输出CSV"""
     stresses = np.asarray(stresses, dtype=float)
     stresses = stresses[np.isfinite(stresses)]
     if stresses.size == 0:
@@ -141,12 +143,22 @@ def plot_percentile_curve_auto(stresses, out_png, title, percentile_q=95.0,
         p_lo, p_hi = 0.0, 100.0
     span = p_hi - p_lo
 
-    # 用 linspace 精确包含右端点，避免 arange 浮点越界
+    # 用 linspace 精确包含右端点
     n = max(1, int(round(span / float(p_step))))
     percentiles = np.linspace(p_lo, p_hi, n + 1, endpoint=True)
     percentiles = np.clip(percentiles, 0.0, 100.0)
 
     ys = [np.percentile(stresses, float(p)) for p in percentiles]
+
+    # === 保存为 CSV ===
+    if csv_path is not None:
+        import csv
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["Percentile (%)", "Von Mises Stress (MPa)"])
+            for p, val in zip(percentiles, ys):
+                writer.writerow([f"{p:.6f}", f"{val:.6f}"])
+
     vmax = float(np.max(stresses))
     p_val = float(np.percentile(stresses, float(percentile_q)))
     style = _auto_style_from_span(span, len(percentiles))
@@ -157,7 +169,7 @@ def plot_percentile_curve_auto(stresses, out_png, title, percentile_q=95.0,
              markersize=style["marker_size"], linewidth=style["line_width"],
              label='应力分位曲线')
 
-    # 标注（仅在窗口内）
+    # 标注
     if p_lo <= 100.0 <= p_hi:
         plt.scatter(100, vmax, label=u'最大值 {:.{d}f} MPa'.format(vmax, d=d))
         plt.text(100, vmax, ('{:.%df}' % d).format(vmax), fontsize=9)
@@ -171,9 +183,7 @@ def plot_percentile_curve_auto(stresses, out_png, title, percentile_q=95.0,
     plt.title(title)
     plt.grid(True, linewidth=0.5, alpha=0.6)
     plt.xlim(p_lo, p_hi)
-    plt.yscale("log")  # ✅ 对数坐标
-
-    # 主刻度（基于范围自动密度）
+    plt.yscale("log")
     xtick_major = style["xtick_major"]
     ticks = np.arange(p_lo, p_hi + 1e-9, xtick_major)
     ticks = np.clip(ticks, 0.0, 100.0)
@@ -187,13 +197,11 @@ def plot_percentile_curve_auto(stresses, out_png, title, percentile_q=95.0,
 
 # ========= 业务包装函数 =========
 def analyze_pitchline(odb, instance_name, centroids, ref_coord, r_region,
-                      p_min, p_max, p_step, percentile_q, plot_dir, tag="L"):
+                      p_min, p_max, p_step, percentile_q, plot_dir, tag="L",
+                      odb_path_for_naming="unknown.odb"):
     """
-    对单条节线（以 ref_coord 的 x,y 为中心）执行：
-    - 圆盘选元
-    - 提取所有帧的 Von Mises
-    - 绘图保存
-    返回：输出图片路径 或 None（若无数据）
+    对单条节线执行：圆盘选元 -> 提取所有帧 Von Mises -> 绘图+CSV
+    返回：输出图片路径 或 None
     """
     rx, ry, rz = ref_coord
     print(f"[{tag}] 邻域中心: ({rx:.6f}, {ry:.6f}), 半径: {r_region}")
@@ -208,17 +216,20 @@ def analyze_pitchline(odb, instance_name, centroids, ref_coord, r_region,
         print(f"[{tag}] ❌ 选中元素无应力数据（S 场缺失或过滤条件不匹配）。")
         return None
 
-    base = os.path.splitext(os.path.basename(odb_path))[0]
-    fn = f"{base}_{tag}_xyDisk_{r_region:.2f}_p{p_min:.2f}-{p_max:.2f}_step{p_step}-1.png"
-    out_png = os.path.join(plot_dir, fn)
+    base = os.path.splitext(os.path.basename(odb_path_for_naming))[0]
+    fn_base = f"{base}_{tag}_xyDisk_{r_region:.2f}_p{p_min:.2f}-{p_max:.2f}_step{p_step}"
+    out_png = os.path.join(plot_dir, fn_base + ".png")
+    out_csv = os.path.join(plot_dir, fn_base + ".csv")
 
     plot_percentile_curve_auto(
         stresses, out_png,
         title=f"{base} - 邻域分位曲线 ({tag}, r={r_region})",
         percentile_q=percentile_q,
-        p_min=p_min, p_max=p_max, p_step=p_step
+        p_min=p_min, p_max=p_max, p_step=p_step,
+        csv_path=out_csv
     )
     print(f"[{tag}] ✅ 分位曲线图已保存: {out_png}")
+    print(f"[{tag}] 📄 分位数据CSV已保存: {out_csv}")
     return out_png
 
 
@@ -239,6 +250,8 @@ def analyze_multiple_pitchlines(odb_path, instance_name, ref_coords_map,
     outputs = {}
     try:
         odb = openOdb(path=odb_path, readOnly=True)
+        if instance_name not in odb.rootAssembly.instances:
+            raise KeyError(f"实例 {instance_name} 在 {os.path.basename(odb_path)} 中不存在")
         inst = odb.rootAssembly.instances[instance_name]
 
         centroids = build_centroids(inst)
@@ -253,7 +266,8 @@ def analyze_multiple_pitchlines(odb_path, instance_name, ref_coords_map,
             try:
                 out_png = analyze_pitchline(
                     odb, instance_name, centroids, rc, r_region,
-                    p_min, p_max, p_step, percentile_q, plot_dir, tag=tag
+                    p_min, p_max, p_step, percentile_q, plot_dir, tag=tag,
+                    odb_path_for_naming=odb_path
                 )
                 outputs[tag] = out_png
             except Exception as e:
@@ -267,17 +281,35 @@ def analyze_multiple_pitchlines(odb_path, instance_name, ref_coords_map,
             odb.close()
 
 
-# ========= 脚本入口 =========
+# ========= 脚本入口：遍历目录下所有 .odb =========
 if __name__ == "__main__":
-    results = analyze_multiple_pitchlines(
-        odb_path=odb_path,
-        instance_name=instance_name,
-        ref_coords_map=REF_COORDS,   # 这里包含 1~5 条节线；填上坐标即可参与
-        r_region=R_REGION,
-        p_min=P_MIN, p_max=P_MAX, p_step=P_STEP,
-        percentile_q=percentile_q,
-        plot_dir=PLOT_DIR
-    )
-    print("\n=== 生成结果一览 ===")
-    for tag, path in results.items():
-        print(f"{tag}: {path}")
+    odb_files = sorted(glob.glob(os.path.join(ODB_DIR, "*.odb")))
+    if not odb_files:
+        print(f"⚠️ 在目录 {os.path.abspath(ODB_DIR)} 下未找到任何 .odb 文件。")
+    else:
+        print(f"🔎 在目录 {os.path.abspath(ODB_DIR)} 下找到 {len(odb_files)} 个 .odb 文件。\n")
+
+    all_results = {}
+    for odb_path in odb_files:
+        print("=" * 80)
+        print(f"▶ 处理 ODB: {os.path.basename(odb_path)}")
+        try:
+            results = analyze_multiple_pitchlines(
+                odb_path=odb_path,
+                instance_name=instance_name,
+                ref_coords_map=REF_COORDS,
+                r_region=R_REGION,
+                p_min=P_MIN, p_max=P_MAX, p_step=P_STEP,
+                percentile_q=percentile_q,
+                plot_dir=PLOT_DIR
+            )
+            all_results[os.path.basename(odb_path)] = results
+        except Exception as e:
+            print(f"❌ 处理 {os.path.basename(odb_path)} 失败：{e}")
+        print("")
+
+    print("\n=== 全部 ODB 生成结果一览 ===")
+    for odb_name, res in all_results.items():
+        print(f"\n[{odb_name}]")
+        for tag, path in (res or {}).items():
+            print(f"  {tag}: {path}")
