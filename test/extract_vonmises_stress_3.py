@@ -13,7 +13,7 @@ import os, math
 
 # ========= 必填配置 =========
 odb_path = "./ZZ35_20250804_1337.odb"        # <--- 改成你的 ODB 路径
-instance_name = "ASSEMBLED_GEAR_PAIR-1-1"    # <--- 改成你的实例名
+instance_name = "ASSEMBLED_GEAR_PAIR-2-1"    # <--- 改成你的实例名
 
 # 仅用于日志展示
 CENTER_X, CENTER_Y = 0.0, 0.0
@@ -21,12 +21,10 @@ CENTER_X, CENTER_Y = 0.0, 0.0
 # ✅ 多条节线的参考坐标（None 的先占位，填上(x,y,z)就会参与运算）
 #    第 5 条已填入你给的坐标
 REF_COORDS = {
-    1: (32.136979,13.782776,8.656675),  # 例： (x1, y1, z1)
-    2: (33.052997,8.945748,1.813109),  # 例： (x2, y2, z2)
-    3: (34.635532,2.484884,3.153081),  # 例： (x3, y3, z3)
-    4: (34.635532,-2.484884,3.153081),  # 例： (x4, y4, z4)
-    5: (33.21232719421387, -8.887279987335205, 7.518895483016967),
-    6: (31.757954,-13.408759,0)
+    1: (37.642464,8.037592,-2.250688),  # 例： (x1, y1, z1)
+    2: (36.895397,3.320812,-2.250688),  # 例： (x2, y2, z2)
+    3: (36.895397,-3.320812,-2.250688),  # 例： (x3, y3, z3)
+    4: (37.642464,-8.037592,-2.250688)  # 例： (x4, y4, z4)
 }
 
 # 选区半径（单位同模型）
@@ -209,7 +207,7 @@ def analyze_pitchline(odb, instance_name, centroids, ref_coord, r_region,
         return None
 
     base = os.path.splitext(os.path.basename(odb_path))[0]
-    fn = f"{base}_{tag}_xyDisk_{r_region:.2f}_p{p_min:.2f}-{p_max:.2f}_step{p_step}-1.png"
+    fn = f"{base}_{tag}_xyDisk_{r_region:.2f}_p{p_min:.2f}-{p_max:.2f}_step{p_step}-2.png"
     out_png = os.path.join(plot_dir, fn)
 
     plot_percentile_curve_auto(
