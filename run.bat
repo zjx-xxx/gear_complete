@@ -25,10 +25,10 @@ echo [第 %loop_count% 轮] Step 1: Running test777.py >> "%SCRIPT_DIR%\run.txt"
 python test777.py || goto :fail
 timeout /t 5 >nul
 
-echo [第 %loop_count% 轮] Step 2: Running test888.py
-echo [第 %loop_count% 轮] Step 2: Running test888.py >> "%SCRIPT_DIR%\run.txt"
-python test888.py || goto :fail
-timeout /t 5 >nul
+@REM echo [第 %loop_count% 轮] Step 2: Running test888.py
+@REM echo [第 %loop_count% 轮] Step 2: Running test888.py >> "%SCRIPT_DIR%\run.txt"
+@REM python test888.py || goto :fail
+@REM timeout /t 5 >nul
 
 cd /d "%SCRIPT_DIR%"
 

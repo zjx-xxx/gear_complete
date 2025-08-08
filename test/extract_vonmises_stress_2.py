@@ -12,7 +12,7 @@ import numpy as np
 import os, math
 
 # ========= 必填配置 =========
-odb_path = "./ZZ35_20250804_1337.odb"        # <--- 改成你的 ODB 路径
+odb_path = "./ZZ35_20250802_2319.odb"        # <--- 改成你的 ODB 路径
 instance_name = "ASSEMBLED_GEAR_PAIR-1-1"    # <--- 改成你的实例名
 
 # 仅用于日志展示

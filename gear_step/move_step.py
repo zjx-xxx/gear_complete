@@ -18,11 +18,11 @@ target_path_1 = os.path.join(target_dir, new_filename_1)
 shutil.move(original_file_1, target_path_1)
 print(f"齿轮1文件已移动到: {target_path_1}")
 
-# 处理齿轮2
-original_file_2 = '../Macro/SpurGear2_cut.step'
-filename_2 = os.path.basename(original_file_2)
-name_2, ext_2 = os.path.splitext(filename_2)
-new_filename_2 = f"{name_2}_{timestamp}-2{ext_2}"
-target_path_2 = os.path.join(target_dir, new_filename_2)
-shutil.move(original_file_2, target_path_2)
-print(f"齿轮2文件已移动到: {target_path_2}")
+# # 处理齿轮2
+# original_file_2 = '../Macro/SpurGear2_cut.step'
+# filename_2 = os.path.basename(original_file_2)
+# name_2, ext_2 = os.path.splitext(filename_2)
+# new_filename_2 = f"{name_2}_{timestamp}-2{ext_2}"
+# target_path_2 = os.path.join(target_dir, new_filename_2)
+# shutil.move(original_file_2, target_path_2)
+# print(f"齿轮2文件已移动到: {target_path_2}")
